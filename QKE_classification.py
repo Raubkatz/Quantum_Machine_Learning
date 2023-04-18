@@ -9,6 +9,7 @@ from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit import Aer
 from qiskit.circuit.library import ZFeatureMap, PauliFeatureMap, ZZFeatureMap, RealAmplitudes
 from sklearn.svm import SVC #Very important, we're going to use support vector machines from sklearn and plug in our qunatum kernels
+from sklearn.metrics import accuracy_score, classification_report
 
 # Load and preprocess the Iris dataset
 iris = datasets.load_iris()
@@ -82,7 +83,7 @@ quantum_instance_8 = QuantumInstance(backend_8, shots=1024)
 quantum_kernel_8 = QuantumKernel(feature_map=feature_map_8, quantum_instance=quantum_instance_8)
 
 # Choose which quantum kernel to use
-quantum_kernel = quantum_kernel_6
+quantum_kernel = quantum_kernel_4
 
 # Train and evaluate the Quantum Kernel SVC model
 qk_matrix_train = quantum_kernel.evaluate(x_vec=X_train)
@@ -92,3 +93,7 @@ y_pred_svc = svc.predict(qk_matrix_test)
 accuracy_svc = accuracy_score(y_test, y_pred_svc)
 
 print(f'SVC with Quantum Kernel accuracy: {accuracy_svc}')
+
+report = classification_report(y_test, y_pred_svc, target_names=iris.target_names)
+print("Classification Report:\n", report)
+
