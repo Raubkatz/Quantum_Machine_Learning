@@ -7,6 +7,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn.base import BaseEstimator, ClassifierMixin
 from qiskit import Aer
+from sklearn.decomposition import PCA
 from qiskit.utils import QuantumInstance
 from qiskit_machine_learning.algorithms import VQC
 from qiskit.algorithms.optimizers import SPSA
@@ -58,6 +59,7 @@ class VQCWrapper(BaseEstimator, ClassifierMixin):
 
 # Define the number of random picks
 n_random_picks = 1
+switch_PCA = True
 
 # Choose data set
 data_nr = 0 #0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
@@ -99,6 +101,12 @@ if data_nr == 3: #we need to do additional preprocessing for the adult data set
     X = dc(preprocessor.fit_transform(X))
 else:
     scaler = MinMaxScaler().fit_transform(X)
+
+if switch_PCA:
+    # Apply PCA
+    pca = PCA(n_components=0.95)  # Keep 95% of the variance
+    X = pca.fit_transform(X)
+    data_name = data_name + "_PCA"
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
