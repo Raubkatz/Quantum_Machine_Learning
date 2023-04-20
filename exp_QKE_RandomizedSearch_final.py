@@ -29,11 +29,13 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 import sys
 
 # Define the number of random picks
-n_random_picks = 1
+n_random_picks = 2
+cv = 5
 switch_PCA = False
+nr_pca = 20
 
 # Choose data set
-data_nr = 0  # 0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
+data_nr = 4  # 0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
 
 # Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:
@@ -92,7 +94,7 @@ else:
 
 if switch_PCA:
     # Apply PCA
-    pca = PCA(n_components=0.95)  # Keep 95% of the variance
+    pca = PCA(n_components=nr_pca)  # Keep 95% of the variance
     X = pca.fit_transform(X)
     data_name = data_name + "_PCA"
 
@@ -138,7 +140,7 @@ class QKEWrapper(BaseEstimator, ClassifierMixin):
         return self.svc.score(kernel_matrix_test, y)
 
 # Define the parameter grid for GridSearchCV
-feature_maps = [ZFeatureMap, PauliFeatureMap, ZZFeatureMap, RealAmplitudes]
+feature_maps = [ZFeatureMap, PauliFeatureMap, ZZFeatureMap]
 quantum_instances = [
     QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
     QuantumInstance(Aer.get_backend('aer_simulator'), shots=2048),
@@ -154,6 +156,13 @@ param_grid = {
 }
 
 """
+ZFeatureMap: This feature map applies a layer of single-qubit Z-rotations, where the rotation angles are determined by the input features. It is a simple feature map that is easy to implement and has relatively low depth, making it suitable for quantum machine learning tasks. The ZFeatureMap can help capture linear relationships in the data.
+
+PauliFeatureMap: The PauliFeatureMap uses rotations along the X, Y, and Z axes, depending on the chosen Pauli string (e.g., 'X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'). The rotation angles depend on the input features. This feature map is more complex compared to the ZFeatureMap and can capture non-linear relationships in the data. Since it uses different Pauli strings, it can provide more flexibility in encoding the input data.
+
+ZZFeatureMap: The ZZFeatureMap is a two-qubit entangling feature map that applies alternating layers of single-qubit Z-rotations (based on input features) and two-qubit ZZ gates. This feature map can capture pairwise correlations between input features and generate entanglement between qubits, which is important for quantum machine learning tasks.
+
+
 The reason that only certain simulators make sense for this specific case is related to how the QuantumKernel class works. QuantumKernel computes the kernel matrix based on the quantum circuits generated using a given feature map. To compute the kernel matrix, it requires the measurement probabilities from the quantum circuits, which can be obtained through sampling.
 
 When using the QKEWrapper with the QuantumKernel, you need to choose simulators that can perform measurements and provide measurement probabilities. The 'aer_simulator' and 'qasm_simulator' are suitable for this task because they can simulate measurements on quantum circuits and return measurement probabilities as outcomes.
@@ -165,7 +174,7 @@ In summary, only 'aer_simulator' and 'qasm_simulator' are used in this case beca
 
 # Perform RandomizedSearchCV
 start = datetime.now()
-random_search = RandomizedSearchCV(QKEWrapper(), param_grid, n_iter=n_random_picks, cv=3, random_state=42, verbose=10)
+random_search = RandomizedSearchCV(QKEWrapper(), param_grid, n_iter=n_random_picks, cv=cv, random_state=42, verbose=10)
 random_search.fit(X_train, y_train)
 
 # Test the best model
