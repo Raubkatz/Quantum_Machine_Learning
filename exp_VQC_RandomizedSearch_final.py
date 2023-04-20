@@ -58,8 +58,10 @@ class VQCWrapper(BaseEstimator, ClassifierMixin):
         return self.vqc.score(X, y)
 
 # Define the number of random picks
-n_random_picks = 1
-switch_PCA = True
+n_random_picks = 10
+cv = 5
+switch_PCA = False
+nr_pca = 20
 
 # Choose data set
 data_nr = 0 #0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
@@ -75,8 +77,17 @@ elif data_nr == 2:
     data_sk = load_wine()
     data_name = "wine"
 elif data_nr == 3:
-    data_sk = fetch_openml(name='adult', version=1, as_frame=True)
-    data_name = "adult"
+    data_sk = fetch_openml(name='Glass-Classification', version=1, as_frame=True)
+    data_name = "Glass-Classification"
+elif data_nr == 4:
+    data_sk = fetch_openml(name='ilpd', version=1, as_frame=True)
+    data_name = "ilpd"
+elif data_nr == 5:
+    data_sk = fetch_openml(name='phoneme', version=1, as_frame=True)
+    data_name = "phoneme"
+elif data_nr == 6:
+    data_sk = fetch_openml(name='Insurance', version=1, as_frame=True)
+    data_name = "Insurance"
 else:
     print('No valid data choice, exiting...')
     sys.exit()
@@ -104,7 +115,7 @@ else:
 
 if switch_PCA:
     # Apply PCA
-    pca = PCA(n_components=0.95)  # Keep 95% of the variance
+    pca = PCA(n_components=nr_pca)  # Keep 95% of the variance
     X = pca.fit_transform(X)
     data_name = data_name + "_PCA"
 
@@ -120,18 +131,58 @@ feature_maps = [PauliFeatureMap, ZFeatureMap, ZZFeatureMap]
 ansatzes = [EfficientSU2, TwoLocal, RealAmplitudes]
 
 param_grid = {
-    'feature_map': feature_maps,
-    'ansatz': ansatzes,
-    'optimizer': [SPSA(maxiter=100), COBYLA(maxiter=100), SPSA(maxiter=100), ADAM(maxiter=100), L_BFGS_B(maxiter=100), NFT(maxiter=100)],
+    'feature_map': [PauliFeatureMap, ZFeatureMap, ZZFeatureMap],
+    'ansatz': [EfficientSU2, TwoLocal, RealAmplitudes],
+    'optimizer': [
+        COBYLA(maxiter=100),
+        SPSA(maxiter=100),
+        #ADAM(maxiter=2),
+        L_BFGS_B(maxiter=100),
+        NFT(maxiter=100),
+    ],
     'quantum_instance': [
+        QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
         QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024),
-        QuantumInstance(Aer.get_backend('statevector_simulator'))
-    ]
+        QuantumInstance(Aer.get_backend('statevector_simulator')),
+    ],
 }
+
+"""
+Feature maps: We keep the PauliFeatureMap, ZFeatureMap, and ZZFeatureMap as they are widely used and well-suited for classification tasks. These feature maps encode classical data into a quantum state for further processing.
+
+Ansatzes: We keep EfficientSU2, TwoLocal, and RealAmplitudes as they are versatile and expressive circuit families used for constructing variational circuits. They provide good flexibility and can represent a wide range of quantum states.
+
+Optimizers: I've included a range of popular optimizers such as COBYLA, SPSA, ADAM, L_BFGS_B, and NFT. These optimizers are known for their performance in training variational quantum circuits.
+
+aer_simulator: This is a high-performance simulator for Qiskit Aer that can simulate noiseless and noisy quantum circuits. It can execute circuits with measurements and supports various readout error mitigation techniques. It can be used with the VQC implementation.
+
+aer_simulator_statevector: This is a noiseless simulator that provides the final quantum state vector after the execution of a quantum circuit. Since VQC requires measurement outcomes to train the model, this simulator is not suitable for VQC.
+
+aer_simulator_density_matrix: This simulator also provides a noiseless simulation but with a density matrix representation of the quantum state. As with the aer_simulator_statevector, it is not suitable for VQC because VQC requires measurement outcomes.
+
+aer_simulator_matrix_product_state: This simulator uses a matrix product state (MPS) representation to simulate quantum circuits efficiently for specific types of circuits with low entanglement. However, since VQC requires measurement outcomes, this simulator is not suitable for VQC.
+
+qasm_simulator: This simulator allows you to perform noisy quantum circuit simulations, including measurements. It is suitable for the VQC implementation, as it can provide the necessary measurement outcomes for training the model.
+
+statevector_simulator: This is a noiseless simulator that provides the final quantum state vector after the execution of a quantum circuit. Although it does not inherently support measurement outcomes, you can still use it with VQC by adding measurements to the circuits and obtaining the measurement outcomes from the final state vector. This makes it suitable for the VQC implementation, with some modifications.
+
+Based on this analysis, you can use the aer_simulator, qasm_simulator, and statevector_simulator for the VQC implementation. The aer_simulator_statevector, aer_simulator_density_matrix, and aer_simulator_matrix_product_state are not suitable for VQC, as they do not provide measurement outcomes.
+
+In summary, you don't need to make any modifications to use the statevector_simulator with VQC. Simply passing it as the quantum_instance in the parameter grid will work, as Qiskit's VQC implementation handles the conversion from state vector to measurement outcomes internally.
+
+
+
+It's important to note that not all feature maps and ansatzes are differentiable, which is required for certain optimizers (like ADAM). The error occurs when you use an optimizer that requires gradient information with a feature map or ansatz that is not differentiable. In your current parameter grid, you have included ADAM as one of the optimizers.
+
+To fix this issue, you can either remove the ADAM optimizer from the parameter grid or make sure to only use differentiable feature maps and ansatzes when using the ADAM optimizer.
+
+For example, you can remove the ADAM optimizer from the parameter grid as follows:
+
+"""
 
 # Perform RandomizedSearchCV
 start = datetime.now()
-random_search = RandomizedSearchCV(VQCWrapper(), param_grid, n_iter=n_random_picks, cv=5, random_state=42, verbose=10)
+random_search = RandomizedSearchCV(VQCWrapper(), param_grid, n_iter=n_random_picks, cv=cv, random_state=42, verbose=10)
 random_search.fit(X_train, y_train_onehot)
 
 # Test the best model

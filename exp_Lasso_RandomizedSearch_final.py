@@ -11,13 +11,15 @@ from copy import deepcopy as dc
 import sys
 
 # Define the number of random picks
-n_random_picks = 1
-switch_PCA = True
+n_random_picks = 2
+cv = 5
+switch_PCA = False
+nr_pca = 20
 
 # Choose data set
 data_nr = 0  # 0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
 
-# Load and preprocess the dataset
+# Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:
     data_sk = load_iris()
     data_name = "iris"
@@ -28,16 +30,33 @@ elif data_nr == 2:
     data_sk = load_wine()
     data_name = "wine"
 elif data_nr == 3:
-    data_sk = fetch_openml(name='adult', version=1, as_frame=True)
-    data_name = "adult"
+    data_sk = fetch_openml(name='Glass-Classification', version=1, as_frame=True)
+    data_name = "Glass-Classification"
+elif data_nr == 4:
+    data_sk = fetch_openml(name='ilpd', version=1, as_frame=True)
+    data_name = "ilpd"
+elif data_nr == 5:
+    data_sk = fetch_openml(name='phoneme', version=1, as_frame=True)
+    data_name = "phoneme"
+elif data_nr == 6:
+    data_sk = fetch_openml(name='Insurance', version=1, as_frame=True)
+    data_name = "Insurance"
 else:
     print('No valid data choice, exiting...')
     sys.exit()
 
-X = data_sk.data
-y = data_sk.target
+print(data_sk)
+#sys.exit()
 
-if data_nr == 3:  # we need to do additional preprocessing for the adult data set
+
+X = data_sk.data
+print(X)
+y = data_sk.target
+print(y)
+# sys.exit()
+
+if data_nr == 4:  # we need to do additional preprocessing for the adult data set
+
     # Identify categorical and continuous features
     cat_features = X.select_dtypes(include=['object']).columns
     cont_features = X.select_dtypes(include=[np.number]).columns
@@ -51,12 +70,13 @@ if data_nr == 3:  # we need to do additional preprocessing for the adult data se
 
     # Preprocess the features
     X = dc(preprocessor.fit_transform(X))
+
 else:
-    X = MinMaxScaler().fit_transform(X)
+    scaler = MinMaxScaler().fit_transform(X)
 
 if switch_PCA:
     # Apply PCA
-    pca = PCA(n_components=0.95)  # Keep 95% of the variance
+    pca = PCA(n_components=nr_pca)  # Keep 95% of the variance
     X = pca.fit_transform(X)
     data_name = data_name + "_PCA"
 
@@ -79,7 +99,7 @@ param_grid = {
 
 # Perform RandomizedSearchCV
 start = datetime.now()
-random_search = RandomizedSearchCV(Lasso(), param_grid, n_iter=n_random_picks, cv=5, random_state=42, verbose=10)
+random_search = RandomizedSearchCV(Lasso(), param_grid, n_iter=n_random_picks, cv=cv, random_state=42, verbose=10)
 random_search.fit(X_train, y_train)
 
 # Test the best model
