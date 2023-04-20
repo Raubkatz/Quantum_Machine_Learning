@@ -9,6 +9,7 @@ from xgboost import XGBClassifier
 import time
 import os
 import datetime
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit import BasicAer
@@ -32,7 +33,7 @@ classifiers = {
 }
 
 # Set PCA to "Yes" or "No"
-use_PCA = "Yes"
+use_PCA = "No"
 
 
 results = {key: {'times': [], 'accuracies': []} for key in classifiers.keys()}
@@ -48,6 +49,9 @@ for sample_size in sample_sizes:
         pca = PCA(n_components=2)
         X = pca.fit_transform(X)
 
+    # Normalize and rescale the data
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    X = scaler.fit_transform(X)
 
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

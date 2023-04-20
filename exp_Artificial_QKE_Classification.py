@@ -28,6 +28,7 @@ from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit.utils import QuantumInstance
 import time
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
 # Create results folder if it doesn't exist
 if not os.path.exists('results'):
@@ -36,7 +37,7 @@ if not os.path.exists('results'):
 sample_sizes = np.arange(500, 2001, 500)
 
 # Set PCA to "Yes" or "No"
-use_PCA = "Yes"
+use_PCA = "No"
 pca_prefix = "PCA_" if use_PCA == "Yes" else ""
 
 ###already calculated with 500-2000 samples
@@ -113,6 +114,10 @@ for kernel in quantum_kernels:
             # Perform PCA on the generated data
             pca = PCA(n_components=2)
             X = pca.fit_transform(X)
+
+        # Normalize and rescale the data
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+        X = scaler.fit_transform(X)
 
         # Split data into training and testing sets
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
