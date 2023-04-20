@@ -58,7 +58,7 @@ class VQCWrapper(BaseEstimator, ClassifierMixin):
         return self.vqc.score(X, y)
 
 # Define the number of random picks
-n_random_picks = 2
+n_random_picks = 10
 cv = 5
 switch_PCA = False
 nr_pca = 20
@@ -134,11 +134,11 @@ param_grid = {
     'feature_map': [PauliFeatureMap, ZFeatureMap, ZZFeatureMap],
     'ansatz': [EfficientSU2, TwoLocal, RealAmplitudes],
     'optimizer': [
-        COBYLA(maxiter=2),
-        SPSA(maxiter=2),
-        ADAM(maxiter=2),
-        L_BFGS_B(maxiter=2),
-        NFT(maxiter=2),
+        COBYLA(maxiter=100),
+        SPSA(maxiter=100),
+        #ADAM(maxiter=2),
+        L_BFGS_B(maxiter=100),
+        NFT(maxiter=100),
     ],
     'quantum_instance': [
         QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
@@ -169,6 +169,15 @@ statevector_simulator: This is a noiseless simulator that provides the final qua
 Based on this analysis, you can use the aer_simulator, qasm_simulator, and statevector_simulator for the VQC implementation. The aer_simulator_statevector, aer_simulator_density_matrix, and aer_simulator_matrix_product_state are not suitable for VQC, as they do not provide measurement outcomes.
 
 In summary, you don't need to make any modifications to use the statevector_simulator with VQC. Simply passing it as the quantum_instance in the parameter grid will work, as Qiskit's VQC implementation handles the conversion from state vector to measurement outcomes internally.
+
+
+
+It's important to note that not all feature maps and ansatzes are differentiable, which is required for certain optimizers (like ADAM). The error occurs when you use an optimizer that requires gradient information with a feature map or ansatz that is not differentiable. In your current parameter grid, you have included ADAM as one of the optimizers.
+
+To fix this issue, you can either remove the ADAM optimizer from the parameter grid or make sure to only use differentiable feature maps and ansatzes when using the ADAM optimizer.
+
+For example, you can remove the ADAM optimizer from the parameter grid as follows:
+
 """
 
 # Perform RandomizedSearchCV
