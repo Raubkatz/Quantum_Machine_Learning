@@ -8,6 +8,7 @@ data set to be calculated:
 Iris
 
 ilpd: Kevin google colab: QKE, 
+Sebastian lokal: VQC
 
 wine
 
