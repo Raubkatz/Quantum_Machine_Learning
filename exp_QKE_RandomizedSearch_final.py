@@ -29,7 +29,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 import sys
 
 # Define the number of random picks
-n_random_picks = 2
+n_random_picks = 100
 cv = 5
 switch_PCA = False
 nr_pca = 20
