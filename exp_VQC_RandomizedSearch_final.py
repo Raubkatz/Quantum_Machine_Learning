@@ -74,7 +74,7 @@ nr_pca = 20
 max_iter = 50# maximum of iterations for the optimizer
 
 # Choose data set
-data_nr = 0 # 0: iris, 1: breast cancer, 2: wine data set, 3:
+data_nr = 3 # 0: iris, 1: breast cancer, 2: wine data set, 3:
 
 # Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:

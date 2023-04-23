@@ -42,7 +42,7 @@ cv = 5
 nr_pca = 20
 
 # Choose data set
-data_nr = 1 # 0: iris, 1: breast cancer, 2: wine data set
+data_nr = 3 # 0: iris, 1: breast cancer, 2: wine data set
 
 # Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:
