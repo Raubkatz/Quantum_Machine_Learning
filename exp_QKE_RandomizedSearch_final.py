@@ -27,15 +27,22 @@ from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit.circuit.library import ZFeatureMap, PauliFeatureMap, ZZFeatureMap, RealAmplitudes
 from sklearn.base import BaseEstimator, ClassifierMixin
 import sys
+import qiskit
+import qiskit_machine_learning
+print('qiskit and quiskit machine learning versions:')
+print(qiskit.__version__)
+print(qiskit_machine_learning.__version__)
 
+#gpu
+#import os
+#os.environ["CUDA_VISIBLE_DEVICES"]="0"
 # Define the number of random picks
-n_random_picks = 100
+n_random_picks = 2
 cv = 5
-switch_PCA = False
 nr_pca = 20
 
 # Choose data set
-data_nr = 4  # 0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
+data_nr = 1 # 0: iris, 1: breast cancer, 2: wine data set
 
 # Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:
@@ -48,32 +55,22 @@ elif data_nr == 2:
     data_sk = load_wine()
     data_name = "wine"
 elif data_nr == 3:
-    data_sk = fetch_openml(name='Glass-Classification', version=1, as_frame=True)
-    data_name = "Glass-Classification"
-elif data_nr == 4:
     data_sk = fetch_openml(name='ilpd', version=1, as_frame=True)
     data_name = "ilpd"
-elif data_nr == 5:
+elif data_nr == 4:
     data_sk = fetch_openml(name='phoneme', version=1, as_frame=True)
     data_name = "phoneme"
-elif data_nr == 6:
+elif data_nr == 5:
     data_sk = fetch_openml(name='Insurance', version=1, as_frame=True)
     data_name = "Insurance"
 else:
     print('No valid data choice, exiting...')
     sys.exit()
 
-print(data_sk)
-#sys.exit()
-
-
 X = data_sk.data
-print(X)
 y = data_sk.target
-print(y)
-# sys.exit()
 
-if data_nr == 4:  # we need to do additional preprocessing for the adult data set
+if data_nr >= 3:  # we need to do additional preprocessing for the adult data set
 
     # Identify categorical and continuous features
     cat_features = X.select_dtypes(include=['object']).columns
@@ -92,7 +89,9 @@ if data_nr == 4:  # we need to do additional preprocessing for the adult data se
 else:
     scaler = MinMaxScaler().fit_transform(X)
 
-if switch_PCA:
+print("Starting Randomized Search for the " + str(data_name) + " data set,\n" + str(n_random_picks) + " randomly parameterized models will be tested in a " + str(cv) +"-fold cross validation.\n\n")
+if X.shape[1] > 20:  # we need to use PCA to reduce the number of features
+    print("Too man features, PCA will be applied.")
     # Apply PCA
     pca = PCA(n_components=nr_pca)  # Keep 95% of the variance
     X = pca.fit_transform(X)
@@ -101,7 +100,7 @@ if switch_PCA:
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 class QKEWrapper(BaseEstimator, ClassifierMixin):
-    def __init__(self, feature_map=None, quantum_instance=None, feature_dimension=4, C=1.0):
+    def __init__(self, feature_map=None, quantum_instance=None, feature_dimension=None, C=1.0):
         self.feature_map = feature_map
         self.quantum_instance = quantum_instance
         self.feature_dimension = feature_dimension
@@ -141,13 +140,12 @@ class QKEWrapper(BaseEstimator, ClassifierMixin):
 
 # Define the parameter grid for GridSearchCV
 feature_maps = [ZFeatureMap, PauliFeatureMap, ZZFeatureMap]
+
 quantum_instances = [
     QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
-    QuantumInstance(Aer.get_backend('aer_simulator'), shots=2048),
-    QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024),
-    QuantumInstance(Aer.get_backend('qasm_simulator'), shots=2048),
-]
-C_values = np.logspace(-4, 4, 9)
+    QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024)]
+#C_values = np.logspace(-4, 4, 9)
+C_values = np.logspace(-3, 3, 9)
 
 param_grid = {
     'feature_map': feature_maps,
@@ -155,22 +153,6 @@ param_grid = {
     'C': C_values,
 }
 
-"""
-ZFeatureMap: This feature map applies a layer of single-qubit Z-rotations, where the rotation angles are determined by the input features. It is a simple feature map that is easy to implement and has relatively low depth, making it suitable for quantum machine learning tasks. The ZFeatureMap can help capture linear relationships in the data.
-
-PauliFeatureMap: The PauliFeatureMap uses rotations along the X, Y, and Z axes, depending on the chosen Pauli string (e.g., 'X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'). The rotation angles depend on the input features. This feature map is more complex compared to the ZFeatureMap and can capture non-linear relationships in the data. Since it uses different Pauli strings, it can provide more flexibility in encoding the input data.
-
-ZZFeatureMap: The ZZFeatureMap is a two-qubit entangling feature map that applies alternating layers of single-qubit Z-rotations (based on input features) and two-qubit ZZ gates. This feature map can capture pairwise correlations between input features and generate entanglement between qubits, which is important for quantum machine learning tasks.
-
-
-The reason that only certain simulators make sense for this specific case is related to how the QuantumKernel class works. QuantumKernel computes the kernel matrix based on the quantum circuits generated using a given feature map. To compute the kernel matrix, it requires the measurement probabilities from the quantum circuits, which can be obtained through sampling.
-
-When using the QKEWrapper with the QuantumKernel, you need to choose simulators that can perform measurements and provide measurement probabilities. The 'aer_simulator' and 'qasm_simulator' are suitable for this task because they can simulate measurements on quantum circuits and return measurement probabilities as outcomes.
-
-Other simulators, such as 'statevector_simulator', 'aer_simulator_statevector', 'aer_simulator_density_matrix', and 'aer_simulator_matrix_product_state', are not suitable for this task because they return the final quantum state of the circuit rather than measurement probabilities. These simulators are more appropriate for tasks where you need to work directly with the quantum state or its properties, such as calculating expectation values or simulating quantum dynamics.
-
-In summary, only 'aer_simulator' and 'qasm_simulator' are used in this case because they can provide the necessary measurement probabilities to compute the kernel matrix, which is crucial for the QuantumKernel and QKEWrapper functionality.
-"""
 
 # Perform RandomizedSearchCV
 start = datetime.now()
