@@ -67,14 +67,14 @@ class VQCWrapper(BaseEstimator, ClassifierMixin):
         return self.vqc.score(X, y)
 
 # Define the number of random picks
-n_random_picks = 2
+n_random_picks = 20
 cv = 5
 switch_PCA = False
 nr_pca = 20
-max_iter = 1# maximum of iterations for the optimizer
+max_iter = 50# maximum of iterations for the optimizer
 
 # Choose data set
-data_nr = 1 # 0: iris, 1: breast cancer, 2: wine data set, 3:
+data_nr = 0 # 0: iris, 1: breast cancer, 2: wine data set, 3:
 
 # Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
 if data_nr == 0:
@@ -166,6 +166,7 @@ param_grid = {
     'quantum_instance': [
         QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
         QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024),
+        QuantumInstance(Aer.get_backend('statevector_simulator'), shots=1024) #maybe delete this
     ],
 }
 

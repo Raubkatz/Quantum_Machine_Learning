@@ -37,7 +37,7 @@ print(qiskit_machine_learning.__version__)
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"]="0"
 # Define the number of random picks
-n_random_picks = 2
+n_random_picks = 20
 cv = 5
 nr_pca = 20
 
@@ -143,7 +143,9 @@ feature_maps = [ZFeatureMap, PauliFeatureMap, ZZFeatureMap]
 
 quantum_instances = [
     QuantumInstance(Aer.get_backend('aer_simulator'), shots=1024),
-    QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024)]
+    QuantumInstance(Aer.get_backend('qasm_simulator'), shots=1024),
+    QuantumInstance(Aer.get_backend('statevector_simulator'), shots=1024) #maybe delete this
+    ]
 #C_values = np.logspace(-4, 4, 9)
 C_values = np.logspace(-3, 3, 9)
 
