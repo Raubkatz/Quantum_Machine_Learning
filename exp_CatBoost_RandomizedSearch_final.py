@@ -10,53 +10,55 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from datetime import datetime
 from copy import deepcopy as dc
 import sys
+import os
 
 # Define the number of random picks
-n_random_picks = 2
+n_random_picks = 20
 cv = 5
-switch_PCA = False
 nr_pca = 20
 
 # Choose data set
-data_nr = 0  # 0: iris, 1: breast cancer, 2: wine data set, 3: adult data set aka census income
+data_nr = 0
 
-# Load and preprocess the Iris dataset, all features of these datasets are conitnuous no additional preprocessing required
-if data_nr == 0:
+# Load the data set
+if data_nr == 0: # in the paper
     data_sk = load_iris()
     data_name = "iris"
-elif data_nr == 1:
+elif data_nr == 1: # not in the paper
     data_sk = load_breast_cancer()
     data_name = "breast cancer"
-elif data_nr == 2:
+elif data_nr == 2: # in the paper
     data_sk = load_wine()
     data_name = "wine"
-elif data_nr == 3:
-    data_sk = fetch_openml(name='Glass-Classification', version=1, as_frame=True)
-    data_name = "Glass-Classification"
-elif data_nr == 4:
+elif data_nr == 3: # in the paper
     data_sk = fetch_openml(name='ilpd', version=1, as_frame=True)
     data_name = "ilpd"
-elif data_nr == 5:
+elif data_nr == 4: # not in the paper
     data_sk = fetch_openml(name='phoneme', version=1, as_frame=True)
     data_name = "phoneme"
-elif data_nr == 6:
+elif data_nr == 5: # not in the paper
     data_sk = fetch_openml(name='Insurance', version=1, as_frame=True)
     data_name = "Insurance"
+elif data_nr == 6: # in the paper
+    data_sk = fetch_openml(name='breast-cancer-coimbra', version=1, as_frame=True)
+    data_name = "breast-cancer-coimbra"
+elif data_nr == 7: # not in the paper
+    data_sk = fetch_openml(name='Is-this-a-good-customer', version=1, as_frame=True)
+    data_name = "Is-this-a-good-customer"
+elif data_nr == 8: # in the paper
+    data_sk = fetch_openml(name='tae', version=1, as_frame=True)
+    data_name = "tae"
+elif data_nr == 9: # in the paper
+    data_sk = fetch_openml(name='breast-tissue', version=1, as_frame=True)
+    data_name = "breast-tissue"
 else:
     print('No valid data choice, exiting...')
     sys.exit()
 
-print(data_sk)
-#sys.exit()
-
-
 X = data_sk.data
-print(X)
 y = data_sk.target
-print(y)
-# sys.exit()
 
-if data_nr == 4:  # we need to do additional preprocessing for the adult data set
+if data_nr >= 3:  # we need to do additional preprocessing for the datsets featuring categorical data
 
     # Identify categorical and continuous features
     cat_features = X.select_dtypes(include=['object']).columns
@@ -75,7 +77,13 @@ if data_nr == 4:  # we need to do additional preprocessing for the adult data se
 else:
     scaler = MinMaxScaler().fit_transform(X)
 
-if switch_PCA:
+pid = os.getpid() # get the process ID
+pgid = os.getpgid(pid) # get the process group ID (PGID)
+print("Starting Grid Search for the " + str(data_name) + " data set,\n" + str(n_random_picks) + " randomly parameterized models will be tested in a " + str(cv) +"-fold cross validation.\n\n")
+print("Job ID:", pgid)
+
+if X.shape[1] > 20:  # we need to use PCA to reduce the number of features
+    print("Too man features, PCA will be applied.")
     # Apply PCA
     pca = PCA(n_components=nr_pca)  # Keep 95% of the variance
     X = pca.fit_transform(X)
