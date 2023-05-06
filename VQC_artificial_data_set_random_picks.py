@@ -32,7 +32,6 @@ from qiskit.algorithms.optimizers import COBYLA, SPSA, ADAM, L_BFGS_B, TNC, NFT
 from qiskit.circuit.library import EfficientSU2
 
 
-max_iter = 100
 
 import os
 import numpy as np
@@ -48,21 +47,21 @@ from qiskit.circuit.library import ZFeatureMap, PauliFeatureMap, ZZFeatureMap
 from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit.utils import QuantumInstance
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
-
 import time
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 import random
 
-
 # Create results folder if it doesn't exist
 if not os.path.exists('results'):
     os.makedirs('results')
 
-#pls calc
-#sample_sizes = np.arange(500, 2001, 500)
+#sample sizes:
 #sample_sizes = np.arange(40, 61, 10) #test only
 sample_sizes = [50,100,250,500,1000,1500,2000]
+random_combinations = 20
+random.seed(42)
+max_iter = 100 #maximum iterations for the optimizer
 
 # Set PCA to "Yes" or "No"
 use_PCA = "No"
@@ -108,7 +107,7 @@ for vqc_param in VQC_parametrizations:
     optimizer = vqc_param["optimizer"]
     quantum_instance = vqc_param["quantum_instance"]
 
-random_params = random.sample(VQC_parametrizations, 20)
+random_params = random.sample(VQC_parametrizations, random_combinations)
 
 did_not_work_list = list()
 
