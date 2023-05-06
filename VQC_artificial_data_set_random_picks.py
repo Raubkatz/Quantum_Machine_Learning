@@ -52,16 +52,17 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 import time
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
+import random
+
 
 # Create results folder if it doesn't exist
 if not os.path.exists('results'):
     os.makedirs('results')
+
 #pls calc
 #sample_sizes = np.arange(500, 2001, 500)
-#sample_sizes = np.arange(40, 61, 10)
+#sample_sizes = np.arange(40, 61, 10) #test only
 sample_sizes = [50,100,250,500,1000,1500,2000]
-
-
 
 # Set PCA to "Yes" or "No"
 use_PCA = "No"
@@ -107,9 +108,11 @@ for vqc_param in VQC_parametrizations:
     optimizer = vqc_param["optimizer"]
     quantum_instance = vqc_param["quantum_instance"]
 
+random_params = random.sample(VQC_parametrizations, 20)
+
 did_not_work_list = list()
 
-for params in VQC_parametrizations:
+for params in random_params:
     name = params['name']
     feature_map = params['feature_map']
     ansatz = params['ansatz']
