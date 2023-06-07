@@ -11,3 +11,6 @@ exp_art contains all scripts for performing the experiments on ain artificially 
 
 
 exp_bench continas all scripts for the experiments on benchmark data sets.
+
+The paper preprint can be found at:
+https://www.preprints.org/manuscript/202305.0833/v2
