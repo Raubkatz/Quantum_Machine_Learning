@@ -18,7 +18,7 @@ if not os.path.exists('results'):
 sample_sizes = [50, 100, 250, 500, 1000, 1500, 2000]
 random.seed(42)
 n_random_picks = 20
-use_randomized_search = True  # Set this to False for out-of-the-box implementation
+use_randomized_search = False  # Set this to False for out-of-the-box implementation
 search_prefix = "RandomSearch_" if use_randomized_search else "OutOfTheBox_"
 use_PCA = "No"
 pca_prefix = "PCA_" if use_PCA == "Yes" else ""
@@ -62,6 +62,7 @@ for sample_size in sample_sizes:
 
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    start_time = time.time()
 
     # Create the SVM classifier
     svm = SVC()
@@ -74,7 +75,6 @@ for sample_size in sample_sizes:
         search_model = svm
 
     # Train the classifier and record the start time
-    start_time = time.time()
     search_model.fit(X_train, y_train)
     end_time = time.time()
 

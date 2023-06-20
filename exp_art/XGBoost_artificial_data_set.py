@@ -57,6 +57,8 @@ for sample_size in sample_sizes:
 
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    start_time = time.time()
+
 
     # Create the XGBoost classifier
     xgb = XGBClassifier(random_state=42)
@@ -69,7 +71,6 @@ for sample_size in sample_sizes:
         search_model = xgb
 
     # Train the classifier and record the start time
-    start_time = time.time()
     search_model.fit(X_train, y_train)
     end_time = time.time()
 

@@ -1,5 +1,4 @@
-from sklearn.linear_model import RidgeClassifier
-from lightgbm import LGBMClassifier
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
@@ -12,6 +11,8 @@ import os
 import random
 from sklearn.decomposition import PCA
 import time
+from catboost import CatBoostClassifier
+
 # Create results folder if it doesn't exist
 if not os.path.exists('results'):
     os.makedirs('results')
@@ -26,20 +27,16 @@ use_PCA = "No"
 pca_prefix = "PCA_" if use_PCA == "Yes" else ""
 
 
-times = []
-accuracies = []
-
 # Define the parameter grid for RandomizedSearchCV
 param_grid = {
-    'alpha': [0.001, 0.01, 0.1, 1, 10, 100],
-    'fit_intercept': [True, False],
-    'normalize': [True, False],
-    'copy_X': [True, False],
-    'max_iter': [100, 500, 1000],
-    'tol': [1e-4, 1e-3, 1e-2],
-    'solver': ['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'],
-    'random_state': [42]
+    'iterations': [50, 100, 150, 200],
+    'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    'depth': [3, 5, 7, 10],
+    'l2_leaf_reg': [1, 3, 5, 7, 9],
 }
+
+times = []
+accuracies = []
 
 for sample_size in sample_sizes:
     print(f"Classifying with {sample_size} samples")
@@ -61,15 +58,15 @@ for sample_size in sample_sizes:
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     start_time = time.time()
 
-    # Create the Ridge classifier
-    ridge = RidgeClassifier(random_state=42)
+    # Create the CatBoost classifier
+    catboost = CatBoostClassifier(verbose=0, random_state=42)
 
     if use_randomized_search:
         # RandomizedSearchCV object
-        random_search = RandomizedSearchCV(ridge, param_distributions=param_grid, n_iter=n_random_picks, cv=5, n_jobs=-1)
+        random_search = RandomizedSearchCV(catboost, param_distributions=param_grid, n_iter=n_random_picks, cv=5, n_jobs=-1)
         search_model = random_search
     else:
-        search_model = ridge
+        search_model = catboost
 
     # Train the classifier and record the start time
     search_model.fit(X_train, y_train)
@@ -92,8 +89,8 @@ for sample_size in sample_sizes:
 
     # Save results in a single text file
     results_array = np.column_stack((sample_size, time_taken, accuracy))
-    #np.savetxt(f"results/{pca_prefix}{search_prefix}Ridge_results_{sample_size}.txt", results_array, fmt='%.6f',
+    #np.savetxt(f"results/{pca_prefix}{search_prefix}CatBoost_results_{sample_size}.txt", results_array, fmt='%.6f',
     #           header='Sample_Size Time(s) Accuracy', delimiter='\t', comments='')
 results_array = np.column_stack((sample_sizes, times, accuracies))
-np.savetxt(f"results/{pca_prefix}{search_prefix}Ridge_results.txt", results_array, fmt='%.6f',
+np.savetxt(f"results/{pca_prefix}{search_prefix}CatBoost_results.txt", results_array, fmt='%.6f',
            header='Sample_Size Time(s) Accuracy', delimiter='\t', comments='')
