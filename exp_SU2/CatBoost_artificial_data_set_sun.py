@@ -19,7 +19,7 @@ if not os.path.exists('results_sun'):
     os.makedirs('results_sun')
 
 sample_sizes = [50, 100, 250, 500, 1000, 1500, 2000]
-random.seed(39)
+random.seed(42)
 n_random_picks = 20
 
 use_randomized_search = False  # Set this to False for out-of-the-box implementation
