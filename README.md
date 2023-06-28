@@ -2,7 +2,7 @@
 
 This is a small repository that shows some basic applications of the quantum machine learning methods from qiskit-machine-learning for three types of data for classification.
 
-The full documentation on all scripts still needs to be done.
+The full documentation on all scripts still needs to be done. However, the cripts are quite self explanatory, just go into the respective folder and run the program, all results will be saved.
 
 exp_SU2 contains all scripts for performing the experiments on SU(2) random data.
 
